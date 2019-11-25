@@ -63,6 +63,8 @@ function GetPageInfos()
     $result[] = array('caption' => 'Vacina', 'short_caption' => 'Vacina', 'filename' => 'vacina.php', 'name' => 'vacina', 'group_name' => 'Default', 'add_separator' => false, 'description' => '');
     $result[] = array('caption' => 'Especie', 'short_caption' => 'Especie', 'filename' => 'especie.php', 'name' => 'especie', 'group_name' => 'Default', 'add_separator' => false, 'description' => '');
     $result[] = array('caption' => 'Animal', 'short_caption' => 'Animal', 'filename' => 'animal.php', 'name' => 'animal', 'group_name' => 'Default', 'add_separator' => false, 'description' => '');
+    $result[] = array('caption' => 'Usuário', 'short_caption' => 'Usuário', 'filename' => 'usuário.php', 'name' => 'usuário', 'group_name' => 'Default', 'add_separator' => false, 'description' => '');
+    $result[] = array('caption' => 'Perfil', 'short_caption' => 'Perfil', 'filename' => 'perfil.php', 'name' => 'perfil', 'group_name' => 'Default', 'add_separator' => false, 'description' => '');
     $result[] = array('caption' => 'Funcionário', 'short_caption' => 'Funcionário', 'filename' => 'funcionário.php', 'name' => 'funcionário', 'group_name' => 'Default', 'add_separator' => false, 'description' => '');
     return $result;
 }
@@ -81,7 +83,7 @@ function GetPagesFooter()
 
 function ApplyCommonPageSettings(Page $page, Grid $grid)
 {
-    $page->SetShowUserAuthBar(false);
+    $page->SetShowUserAuthBar(true);
     $page->setShowNavigation(true);
     $page->OnCustomHTMLHeader->AddListener('Global_CustomHTMLHeaderHandler');
     $page->OnGetCustomTemplate->AddListener('Global_GetCustomTemplateHandler');

@@ -31,29 +31,29 @@
     
     
     
-    class funcionárioPage extends Page
+    class usuárioPage extends Page
     {
         protected function DoBeforeCreate()
         {
             $this->dataset = new TableDataset(
                 MyPDOConnectionFactory::getInstance(),
                 GetConnectionOptions(),
-                '`funcionário`');
+                '`usuário`');
             $this->dataset->addFields(
                 array(
                     new IntegerField('ID', true, true, true),
-                    new StringField('Nome do funcionario(a)', true),
+                    new StringField('Tipo', true),
+                    new StringField('Cliente'),
+                    new StringField('Nome', true),
+                    new DateField('Data de nascimento', true),
                     new StringField('CPF', true),
                     new StringField('RG', true),
-                    new DateField('Data de contratação', true),
-                    new StringField('Cargo', true),
-                    new StringField('Registro da Profissão', true),
                     new StringField('Contato', true),
                     new StringField('E-mail', true),
-                    new IntegerField('Salário', true),
-                    new DateField('Data de Pagamento', true)
+                    new StringField('Senha', true)
                 )
             );
+            $this->dataset->AddLookupField('Cliente', 'perfil', new IntegerField('ID'), new StringField('Nome', false, false, false, false, 'Cliente_Nome', 'Cliente_Nome_perfil'), 'Cliente_Nome_perfil');
         }
     
         protected function DoPrepare() {
@@ -85,24 +85,25 @@
         {
             return array(
                 new FilterColumn($this->dataset, 'ID', 'ID', 'ID'),
-                new FilterColumn($this->dataset, 'Nome do funcionario(a)', 'Nome do funcionario(a)', 'Nome Do Funcionario(a)'),
+                new FilterColumn($this->dataset, 'Tipo', 'Tipo', 'Tipo'),
+                new FilterColumn($this->dataset, 'Cliente', 'Cliente_Nome', 'Cliente'),
+                new FilterColumn($this->dataset, 'Nome', 'Nome', 'Nome'),
+                new FilterColumn($this->dataset, 'Data de nascimento', 'Data de nascimento', 'Data De Nascimento'),
                 new FilterColumn($this->dataset, 'CPF', 'CPF', 'CPF'),
                 new FilterColumn($this->dataset, 'RG', 'RG', 'RG'),
-                new FilterColumn($this->dataset, 'Data de contratação', 'Data de contratação', 'Data De Contratação'),
-                new FilterColumn($this->dataset, 'Cargo', 'Cargo', 'Cargo'),
-                new FilterColumn($this->dataset, 'Registro da Profissão', 'Registro da Profissão', 'Registro Da Profissão'),
                 new FilterColumn($this->dataset, 'Contato', 'Contato', 'Contato'),
                 new FilterColumn($this->dataset, 'E-mail', 'E-mail', 'E-mail'),
-                new FilterColumn($this->dataset, 'Salário', 'Salário', 'Salário'),
-                new FilterColumn($this->dataset, 'Data de Pagamento', 'Data de Pagamento', 'Data De Pagamento')
+                new FilterColumn($this->dataset, 'Senha', 'Senha', 'Senha')
             );
         }
     
         protected function setupQuickFilter(QuickFilter $quickFilter, FixedKeysArray $columns)
         {
             $quickFilter
-                ->addColumn($columns['Nome do funcionario(a)'])
-                ->addColumn($columns['Cargo']);
+                ->addColumn($columns['Tipo'])
+                ->addColumn($columns['Nome'])
+                ->addColumn($columns['CPF'])
+                ->addColumn($columns['RG']);
         }
     
         protected function setupColumnFilter(ColumnFilter $columnFilter)
@@ -112,11 +113,38 @@
     
         protected function setupFilterBuilder(FilterBuilder $filterBuilder, FixedKeysArray $columns)
         {
-            $main_editor = new TextEdit('nome_do_funcionario(a)_edit');
+            $main_editor = new MultiValueSelect('Tipo');
+            $main_editor->addChoice('Administrador', 'Administrador');
+            $main_editor->addChoice('Responsável', 'Responsável');
+            $main_editor->addChoice('Cliente', 'Cliente');
+            
+            $text_editor = new TextEdit('Tipo');
+            
+            $filterBuilder->addColumn(
+                $columns['Tipo'],
+                array(
+                    FilterConditionOperator::EQUALS => $main_editor,
+                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
+                    FilterConditionOperator::IS_GREATER_THAN => $main_editor,
+                    FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
+                    FilterConditionOperator::IS_LESS_THAN => $main_editor,
+                    FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
+                    FilterConditionOperator::CONTAINS => $text_editor,
+                    FilterConditionOperator::DOES_NOT_CONTAIN => $text_editor,
+                    FilterConditionOperator::BEGINS_WITH => $text_editor,
+                    FilterConditionOperator::ENDS_WITH => $text_editor,
+                    FilterConditionOperator::IS_LIKE => $text_editor,
+                    FilterConditionOperator::IS_NOT_LIKE => $text_editor,
+                    FilterConditionOperator::IS_BLANK => null,
+                    FilterConditionOperator::IS_NOT_BLANK => null
+                )
+            );
+            
+            $main_editor = new TextEdit('nome_edit');
             $main_editor->SetMaxLength(100);
             
             $filterBuilder->addColumn(
-                $columns['Nome do funcionario(a)'],
+                $columns['Nome'],
                 array(
                     FilterConditionOperator::EQUALS => $main_editor,
                     FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
@@ -137,19 +165,11 @@
                 )
             );
             
-            $main_editor = new ComboBox('Cargo');
-            $main_editor->SetAllowNullValue(false);
-            $main_editor->addChoice('Veterinario(a)', 'Veterinario(a)');
-            $main_editor->addChoice('Tecnico(a)', 'Tecnico(a)');
-            $main_editor->addChoice('Serviços gerais', 'Serviços gerais');
-            
-            $multi_value_select_editor = new MultiValueSelect('Cargo');
-            $multi_value_select_editor->setChoices($main_editor->getChoices());
-            
-            $text_editor = new TextEdit('Cargo');
+            $main_editor = new TextEdit('cpf_edit');
+            $main_editor->SetMaxLength(14);
             
             $filterBuilder->addColumn(
-                $columns['Cargo'],
+                $columns['CPF'],
                 array(
                     FilterConditionOperator::EQUALS => $main_editor,
                     FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
@@ -157,14 +177,39 @@
                     FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
                     FilterConditionOperator::IS_LESS_THAN => $main_editor,
                     FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::CONTAINS => $text_editor,
-                    FilterConditionOperator::DOES_NOT_CONTAIN => $text_editor,
-                    FilterConditionOperator::BEGINS_WITH => $text_editor,
-                    FilterConditionOperator::ENDS_WITH => $text_editor,
-                    FilterConditionOperator::IS_LIKE => $text_editor,
-                    FilterConditionOperator::IS_NOT_LIKE => $text_editor,
-                    FilterConditionOperator::IN => $multi_value_select_editor,
-                    FilterConditionOperator::NOT_IN => $multi_value_select_editor,
+                    FilterConditionOperator::IS_BETWEEN => $main_editor,
+                    FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
+                    FilterConditionOperator::CONTAINS => $main_editor,
+                    FilterConditionOperator::DOES_NOT_CONTAIN => $main_editor,
+                    FilterConditionOperator::BEGINS_WITH => $main_editor,
+                    FilterConditionOperator::ENDS_WITH => $main_editor,
+                    FilterConditionOperator::IS_LIKE => $main_editor,
+                    FilterConditionOperator::IS_NOT_LIKE => $main_editor,
+                    FilterConditionOperator::IS_BLANK => null,
+                    FilterConditionOperator::IS_NOT_BLANK => null
+                )
+            );
+            
+            $main_editor = new TextEdit('rg_edit');
+            $main_editor->SetMaxLength(15);
+            
+            $filterBuilder->addColumn(
+                $columns['RG'],
+                array(
+                    FilterConditionOperator::EQUALS => $main_editor,
+                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
+                    FilterConditionOperator::IS_GREATER_THAN => $main_editor,
+                    FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
+                    FilterConditionOperator::IS_LESS_THAN => $main_editor,
+                    FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
+                    FilterConditionOperator::IS_BETWEEN => $main_editor,
+                    FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
+                    FilterConditionOperator::CONTAINS => $main_editor,
+                    FilterConditionOperator::DOES_NOT_CONTAIN => $main_editor,
+                    FilterConditionOperator::BEGINS_WITH => $main_editor,
+                    FilterConditionOperator::ENDS_WITH => $main_editor,
+                    FilterConditionOperator::IS_LIKE => $main_editor,
+                    FilterConditionOperator::IS_NOT_LIKE => $main_editor,
                     FilterConditionOperator::IS_BLANK => null,
                     FilterConditionOperator::IS_NOT_BLANK => null
                 )
@@ -213,12 +258,22 @@
         protected function AddFieldColumns(Grid $grid, $withDetails = true)
         {
             //
-            // View column for Nome do funcionario(a) field
+            // View column for Tipo field
             //
-            $column = new TextViewColumn('Nome do funcionario(a)', 'Nome do funcionario(a)', 'Nome Do Funcionario(a)', $this->dataset);
+            $column = new TextViewColumn('Tipo', 'Tipo', 'Tipo', $this->dataset);
+            $column->SetOrderable(true);
+            $column->setMinimalVisibility(ColumnVisibility::PHONE);
+            $column->SetDescription('');
+            $column->SetFixedWidth(null);
+            $grid->AddViewColumn($column);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Nome', 'Nome', 'Nome', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('funcionárioGrid_Nome do funcionario(a)_handler_list');
+            $column->SetFullTextWindowHandlerName('usuárioGrid_Nome_handler_list');
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
             $column->SetFixedWidth(null);
@@ -245,23 +300,12 @@
             $grid->AddViewColumn($column);
             
             //
-            // View column for Cargo field
+            // View column for E-mail field
             //
-            $column = new TextViewColumn('Cargo', 'Cargo', 'Cargo', $this->dataset);
+            $column = new TextViewColumn('E-mail', 'E-mail', 'E-mail', $this->dataset);
             $column->SetOrderable(true);
-            $column->setMinimalVisibility(ColumnVisibility::PHONE);
-            $column->SetDescription('');
-            $column->SetFixedWidth(null);
-            $grid->AddViewColumn($column);
-            
-            //
-            // View column for Salário field
-            //
-            $column = new NumberViewColumn('Salário', 'Salário', 'Salário', $this->dataset);
-            $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
+            $column->SetMaxLength(75);
+            $column->SetFullTextWindowHandlerName('usuárioGrid_E-mail_handler_list');
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
             $column->SetFixedWidth(null);
@@ -271,12 +315,36 @@
         protected function AddSingleRecordViewColumns(Grid $grid)
         {
             //
-            // View column for Nome do funcionario(a) field
+            // View column for Tipo field
             //
-            $column = new TextViewColumn('Nome do funcionario(a)', 'Nome do funcionario(a)', 'Nome Do Funcionario(a)', $this->dataset);
+            $column = new TextViewColumn('Tipo', 'Tipo', 'Tipo', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddSingleRecordViewColumn($column);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Cliente', 'Cliente_Nome', 'Cliente', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('funcionárioGrid_Nome do funcionario(a)_handler_view');
+            $column->SetFullTextWindowHandlerName('usuárioGrid_Cliente_Nome_handler_view');
+            $grid->AddSingleRecordViewColumn($column);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Nome', 'Nome', 'Nome', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetMaxLength(75);
+            $column->SetFullTextWindowHandlerName('usuárioGrid_Nome_handler_view');
+            $grid->AddSingleRecordViewColumn($column);
+            
+            //
+            // View column for Data de nascimento field
+            //
+            $column = new DateTimeViewColumn('Data de nascimento', 'Data de nascimento', 'Data De Nascimento', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetDateTimeFormat('Y-m-d');
             $grid->AddSingleRecordViewColumn($column);
             
             //
@@ -290,28 +358,6 @@
             // View column for RG field
             //
             $column = new TextViewColumn('RG', 'RG', 'RG', $this->dataset);
-            $column->SetOrderable(true);
-            $grid->AddSingleRecordViewColumn($column);
-            
-            //
-            // View column for Data de contratação field
-            //
-            $column = new DateTimeViewColumn('Data de contratação', 'Data de contratação', 'Data De Contratação', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d');
-            $grid->AddSingleRecordViewColumn($column);
-            
-            //
-            // View column for Cargo field
-            //
-            $column = new TextViewColumn('Cargo', 'Cargo', 'Cargo', $this->dataset);
-            $column->SetOrderable(true);
-            $grid->AddSingleRecordViewColumn($column);
-            
-            //
-            // View column for Registro da Profissão field
-            //
-            $column = new DownloadExternalDataColumn('Registro da Profissão', 'Registro da Profissão', 'Registro Da Profissão', $this->dataset, '');
             $column->SetOrderable(true);
             $grid->AddSingleRecordViewColumn($column);
             
@@ -328,39 +374,69 @@
             $column = new TextViewColumn('E-mail', 'E-mail', 'E-mail', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('funcionárioGrid_E-mail_handler_view');
-            $grid->AddSingleRecordViewColumn($column);
-            
-            //
-            // View column for Salário field
-            //
-            $column = new NumberViewColumn('Salário', 'Salário', 'Salário', $this->dataset);
-            $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
-            $grid->AddSingleRecordViewColumn($column);
-            
-            //
-            // View column for Data de Pagamento field
-            //
-            $column = new DateTimeViewColumn('Data de Pagamento', 'Data de Pagamento', 'Data De Pagamento', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d');
+            $column->SetFullTextWindowHandlerName('usuárioGrid_E-mail_handler_view');
             $grid->AddSingleRecordViewColumn($column);
         }
     
         protected function AddEditColumns(Grid $grid)
         {
             //
-            // Edit column for Cargo field
+            // Edit column for Tipo field
             //
-            $editor = new RadioEdit('cargo_edit');
-            $editor->SetDisplayMode(RadioEdit::StackedMode);
-            $editor->addChoice('Veterinario(a)', 'Veterinario(a)');
-            $editor->addChoice('Tecnico(a)', 'Tecnico(a)');
-            $editor->addChoice('Serviços gerais', 'Serviços gerais');
-            $editColumn = new CustomEditColumn('Cargo', 'Cargo', $editor, $this->dataset);
+            $editor = new CheckBoxGroup('tipo_edit');
+            $editor->SetDisplayMode(CheckBoxGroup::StackedMode);
+            $editor->addChoice('Administrador', 'Administrador');
+            $editor->addChoice('Responsável', 'Responsável');
+            $editor->addChoice('Cliente', 'Cliente');
+            $editColumn = new CustomEditColumn('Tipo', 'Tipo', $editor, $this->dataset);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddEditColumn($editColumn);
+            
+            //
+            // Edit column for Cliente field
+            //
+            $editor = new DynamicCombobox('cliente_edit', $this->CreateLinkBuilder());
+            $editor->setAllowClear(true);
+            $editor->setMinimumInputLength(0);
+            $lookupDataset = new TableDataset(
+                MyPDOConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`perfil`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('ID', true, true, true),
+                    new StringField('Nome', true),
+                    new StringField('CPF', true),
+                    new StringField('RG', true),
+                    new StringField('Contato', true),
+                    new StringField('Ação', true),
+                    new DateField('Data', true)
+                )
+            );
+            $lookupDataset->setOrderByField('Nome', 'ASC');
+            $editColumn = new DynamicLookupEditColumn('Cliente', 'Cliente', 'Cliente_Nome', 'edit_Cliente_Nome_search', $editor, $this->dataset, $lookupDataset, 'ID', 'Nome', '');
+            $editColumn->SetAllowSetToNull(true);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddEditColumn($editColumn);
+            
+            //
+            // Edit column for Nome field
+            //
+            $editor = new TextEdit('nome_edit');
+            $editor->SetMaxLength(100);
+            $editColumn = new CustomEditColumn('Nome', 'Nome', $editor, $this->dataset);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddEditColumn($editColumn);
+            
+            //
+            // Edit column for Data de nascimento field
+            //
+            $editor = new DateTimeEdit('data_de_nascimento_edit', false, 'Y-m-d');
+            $editColumn = new CustomEditColumn('Data De Nascimento', 'Data de nascimento', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -395,22 +471,11 @@
             $grid->AddEditColumn($editColumn);
             
             //
-            // Edit column for Salário field
+            // Edit column for Senha field
             //
-            $editor = new TextEdit('salário_edit');
-            $editColumn = new CustomEditColumn('Salário', 'Salário', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $validator = new NumberValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('NumberValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddEditColumn($editColumn);
-            
-            //
-            // Edit column for Data de Pagamento field
-            //
-            $editor = new DateTimeEdit('data_de_pagamento_edit', false, 'Y-m-d');
-            $editColumn = new CustomEditColumn('Data De Pagamento', 'Data de Pagamento', $editor, $this->dataset);
+            $editor = new TextEdit('senha_edit');
+            $editor->SetMaxLength(20);
+            $editColumn = new CustomEditColumn('Senha', 'Senha', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -420,14 +485,62 @@
         protected function AddMultiEditColumns(Grid $grid)
         {
             //
-            // Edit column for Cargo field
+            // Edit column for Tipo field
             //
-            $editor = new RadioEdit('cargo_edit');
-            $editor->SetDisplayMode(RadioEdit::StackedMode);
-            $editor->addChoice('Veterinario(a)', 'Veterinario(a)');
-            $editor->addChoice('Tecnico(a)', 'Tecnico(a)');
-            $editor->addChoice('Serviços gerais', 'Serviços gerais');
-            $editColumn = new CustomEditColumn('Cargo', 'Cargo', $editor, $this->dataset);
+            $editor = new CheckBoxGroup('tipo_edit');
+            $editor->SetDisplayMode(CheckBoxGroup::StackedMode);
+            $editor->addChoice('Administrador', 'Administrador');
+            $editor->addChoice('Responsável', 'Responsável');
+            $editor->addChoice('Cliente', 'Cliente');
+            $editColumn = new CustomEditColumn('Tipo', 'Tipo', $editor, $this->dataset);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddMultiEditColumn($editColumn);
+            
+            //
+            // Edit column for Cliente field
+            //
+            $editor = new DynamicCombobox('cliente_edit', $this->CreateLinkBuilder());
+            $editor->setAllowClear(true);
+            $editor->setMinimumInputLength(0);
+            $lookupDataset = new TableDataset(
+                MyPDOConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`perfil`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('ID', true, true, true),
+                    new StringField('Nome', true),
+                    new StringField('CPF', true),
+                    new StringField('RG', true),
+                    new StringField('Contato', true),
+                    new StringField('Ação', true),
+                    new DateField('Data', true)
+                )
+            );
+            $lookupDataset->setOrderByField('Nome', 'ASC');
+            $editColumn = new DynamicLookupEditColumn('Cliente', 'Cliente', 'Cliente_Nome', 'multi_edit_Cliente_Nome_search', $editor, $this->dataset, $lookupDataset, 'ID', 'Nome', '');
+            $editColumn->SetAllowSetToNull(true);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddMultiEditColumn($editColumn);
+            
+            //
+            // Edit column for Nome field
+            //
+            $editor = new TextEdit('nome_edit');
+            $editor->SetMaxLength(100);
+            $editColumn = new CustomEditColumn('Nome', 'Nome', $editor, $this->dataset);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddMultiEditColumn($editColumn);
+            
+            //
+            // Edit column for Data de nascimento field
+            //
+            $editor = new DateTimeEdit('data_de_nascimento_edit', false, 'Y-m-d');
+            $editColumn = new CustomEditColumn('Data De Nascimento', 'Data de nascimento', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -462,22 +575,11 @@
             $grid->AddMultiEditColumn($editColumn);
             
             //
-            // Edit column for Salário field
+            // Edit column for Senha field
             //
-            $editor = new TextEdit('salário_edit');
-            $editColumn = new CustomEditColumn('Salário', 'Salário', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $validator = new NumberValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('NumberValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddMultiEditColumn($editColumn);
-            
-            //
-            // Edit column for Data de Pagamento field
-            //
-            $editor = new DateTimeEdit('data_de_pagamento_edit', false, 'Y-m-d');
-            $editColumn = new CustomEditColumn('Data De Pagamento', 'Data de Pagamento', $editor, $this->dataset);
+            $editor = new TextEdit('senha_edit');
+            $editor->SetMaxLength(20);
+            $editColumn = new CustomEditColumn('Senha', 'Senha', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -487,11 +589,62 @@
         protected function AddInsertColumns(Grid $grid)
         {
             //
-            // Edit column for Nome do funcionario(a) field
+            // Edit column for Tipo field
             //
-            $editor = new TextEdit('nome_do_funcionario(a)_edit');
+            $editor = new CheckBoxGroup('tipo_edit');
+            $editor->SetDisplayMode(CheckBoxGroup::StackedMode);
+            $editor->addChoice('Administrador', 'Administrador');
+            $editor->addChoice('Responsável', 'Responsável');
+            $editor->addChoice('Cliente', 'Cliente');
+            $editColumn = new CustomEditColumn('Tipo', 'Tipo', $editor, $this->dataset);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddInsertColumn($editColumn);
+            
+            //
+            // Edit column for Cliente field
+            //
+            $editor = new DynamicCombobox('cliente_edit', $this->CreateLinkBuilder());
+            $editor->setAllowClear(true);
+            $editor->setMinimumInputLength(0);
+            $lookupDataset = new TableDataset(
+                MyPDOConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`perfil`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('ID', true, true, true),
+                    new StringField('Nome', true),
+                    new StringField('CPF', true),
+                    new StringField('RG', true),
+                    new StringField('Contato', true),
+                    new StringField('Ação', true),
+                    new DateField('Data', true)
+                )
+            );
+            $lookupDataset->setOrderByField('Nome', 'ASC');
+            $editColumn = new DynamicLookupEditColumn('Cliente', 'Cliente', 'Cliente_Nome', 'insert_Cliente_Nome_search', $editor, $this->dataset, $lookupDataset, 'ID', 'Nome', '');
+            $editColumn->SetAllowSetToNull(true);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddInsertColumn($editColumn);
+            
+            //
+            // Edit column for Nome field
+            //
+            $editor = new TextEdit('nome_edit');
             $editor->SetMaxLength(100);
-            $editColumn = new CustomEditColumn('Nome Do Funcionario(a)', 'Nome do funcionario(a)', $editor, $this->dataset);
+            $editColumn = new CustomEditColumn('Nome', 'Nome', $editor, $this->dataset);
+            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
+            $editor->GetValidatorCollection()->AddValidator($validator);
+            $this->ApplyCommonColumnEditProperties($editColumn);
+            $grid->AddInsertColumn($editColumn);
+            
+            //
+            // Edit column for Data de nascimento field
+            //
+            $editor = new DateTimeEdit('data_de_nascimento_edit', false, 'Y-m-d');
+            $editColumn = new CustomEditColumn('Data De Nascimento', 'Data de nascimento', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -528,41 +681,6 @@
             $grid->AddInsertColumn($editColumn);
             
             //
-            // Edit column for Data de contratação field
-            //
-            $editor = new DateTimeEdit('data_de_contratação_edit', false, 'Y-m-d');
-            $editColumn = new CustomEditColumn('Data De Contratação', 'Data de contratação', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddInsertColumn($editColumn);
-            
-            //
-            // Edit column for Cargo field
-            //
-            $editor = new RadioEdit('cargo_edit');
-            $editor->SetDisplayMode(RadioEdit::StackedMode);
-            $editor->addChoice('Veterinario(a)', 'Veterinario(a)');
-            $editor->addChoice('Tecnico(a)', 'Tecnico(a)');
-            $editor->addChoice('Serviços gerais', 'Serviços gerais');
-            $editColumn = new CustomEditColumn('Cargo', 'Cargo', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddInsertColumn($editColumn);
-            
-            //
-            // Edit column for Registro da Profissão field
-            //
-            $editor = new ImageUploader('registro_da_profissão_edit');
-            $editor->SetShowImage(false);
-            $editColumn = new UploadFileToFolderColumn('Registro Da Profissão', 'Registro da Profissão', $editor, $this->dataset, false, false, '', '%original_file_name%', $this->OnFileUpload, false);
-            $editColumn->SetReplaceUploadedFileIfExist(true);
-            $editColumn->SetAllowSetToNull(true);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddInsertColumn($editColumn);
-            
-            //
             // Edit column for Contato field
             //
             $editor = new TextEdit('contato_edit');
@@ -591,22 +709,11 @@
             $grid->AddInsertColumn($editColumn);
             
             //
-            // Edit column for Salário field
+            // Edit column for Senha field
             //
-            $editor = new TextEdit('salário_edit');
-            $editColumn = new CustomEditColumn('Salário', 'Salário', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $validator = new NumberValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('NumberValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddInsertColumn($editColumn);
-            
-            //
-            // Edit column for Data de Pagamento field
-            //
-            $editor = new DateTimeEdit('data_de_pagamento_edit', false, 'Y-m-d');
-            $editColumn = new CustomEditColumn('Data De Pagamento', 'Data de Pagamento', $editor, $this->dataset);
+            $editor = new TextEdit('senha_edit');
+            $editor->SetMaxLength(20);
+            $editColumn = new CustomEditColumn('Senha', 'Senha', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -632,12 +739,36 @@
             $grid->AddPrintColumn($column);
             
             //
-            // View column for Nome do funcionario(a) field
+            // View column for Tipo field
             //
-            $column = new TextViewColumn('Nome do funcionario(a)', 'Nome do funcionario(a)', 'Nome Do Funcionario(a)', $this->dataset);
+            $column = new TextViewColumn('Tipo', 'Tipo', 'Tipo', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddPrintColumn($column);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Cliente', 'Cliente_Nome', 'Cliente', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('funcionárioGrid_Nome do funcionario(a)_handler_print');
+            $column->SetFullTextWindowHandlerName('usuárioGrid_Cliente_Nome_handler_print');
+            $grid->AddPrintColumn($column);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Nome', 'Nome', 'Nome', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetMaxLength(75);
+            $column->SetFullTextWindowHandlerName('usuárioGrid_Nome_handler_print');
+            $grid->AddPrintColumn($column);
+            
+            //
+            // View column for Data de nascimento field
+            //
+            $column = new DateTimeViewColumn('Data de nascimento', 'Data de nascimento', 'Data De Nascimento', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetDateTimeFormat('Y-m-d');
             $grid->AddPrintColumn($column);
             
             //
@@ -655,28 +786,6 @@
             $grid->AddPrintColumn($column);
             
             //
-            // View column for Data de contratação field
-            //
-            $column = new DateTimeViewColumn('Data de contratação', 'Data de contratação', 'Data De Contratação', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d');
-            $grid->AddPrintColumn($column);
-            
-            //
-            // View column for Cargo field
-            //
-            $column = new TextViewColumn('Cargo', 'Cargo', 'Cargo', $this->dataset);
-            $column->SetOrderable(true);
-            $grid->AddPrintColumn($column);
-            
-            //
-            // View column for Registro da Profissão field
-            //
-            $column = new DownloadExternalDataColumn('Registro da Profissão', 'Registro da Profissão', 'Registro Da Profissão', $this->dataset, '');
-            $column->SetOrderable(true);
-            $grid->AddPrintColumn($column);
-            
-            //
             // View column for Contato field
             //
             $column = new TextViewColumn('Contato', 'Contato', 'Contato', $this->dataset);
@@ -689,25 +798,14 @@
             $column = new TextViewColumn('E-mail', 'E-mail', 'E-mail', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('funcionárioGrid_E-mail_handler_print');
+            $column->SetFullTextWindowHandlerName('usuárioGrid_E-mail_handler_print');
             $grid->AddPrintColumn($column);
             
             //
-            // View column for Salário field
+            // View column for Senha field
             //
-            $column = new NumberViewColumn('Salário', 'Salário', 'Salário', $this->dataset);
+            $column = new TextViewColumn('Senha', 'Senha', 'Senha', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
-            $grid->AddPrintColumn($column);
-            
-            //
-            // View column for Data de Pagamento field
-            //
-            $column = new DateTimeViewColumn('Data de Pagamento', 'Data de Pagamento', 'Data De Pagamento', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d');
             $grid->AddPrintColumn($column);
         }
     
@@ -724,12 +822,36 @@
             $grid->AddExportColumn($column);
             
             //
-            // View column for Nome do funcionario(a) field
+            // View column for Tipo field
             //
-            $column = new TextViewColumn('Nome do funcionario(a)', 'Nome do funcionario(a)', 'Nome Do Funcionario(a)', $this->dataset);
+            $column = new TextViewColumn('Tipo', 'Tipo', 'Tipo', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddExportColumn($column);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Cliente', 'Cliente_Nome', 'Cliente', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('funcionárioGrid_Nome do funcionario(a)_handler_export');
+            $column->SetFullTextWindowHandlerName('usuárioGrid_Cliente_Nome_handler_export');
+            $grid->AddExportColumn($column);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Nome', 'Nome', 'Nome', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetMaxLength(75);
+            $column->SetFullTextWindowHandlerName('usuárioGrid_Nome_handler_export');
+            $grid->AddExportColumn($column);
+            
+            //
+            // View column for Data de nascimento field
+            //
+            $column = new DateTimeViewColumn('Data de nascimento', 'Data de nascimento', 'Data De Nascimento', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetDateTimeFormat('Y-m-d');
             $grid->AddExportColumn($column);
             
             //
@@ -747,28 +869,6 @@
             $grid->AddExportColumn($column);
             
             //
-            // View column for Data de contratação field
-            //
-            $column = new DateTimeViewColumn('Data de contratação', 'Data de contratação', 'Data De Contratação', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d');
-            $grid->AddExportColumn($column);
-            
-            //
-            // View column for Cargo field
-            //
-            $column = new TextViewColumn('Cargo', 'Cargo', 'Cargo', $this->dataset);
-            $column->SetOrderable(true);
-            $grid->AddExportColumn($column);
-            
-            //
-            // View column for Registro da Profissão field
-            //
-            $column = new DownloadExternalDataColumn('Registro da Profissão', 'Registro da Profissão', 'Registro Da Profissão', $this->dataset, '');
-            $column->SetOrderable(true);
-            $grid->AddExportColumn($column);
-            
-            //
             // View column for Contato field
             //
             $column = new TextViewColumn('Contato', 'Contato', 'Contato', $this->dataset);
@@ -781,37 +881,50 @@
             $column = new TextViewColumn('E-mail', 'E-mail', 'E-mail', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('funcionárioGrid_E-mail_handler_export');
+            $column->SetFullTextWindowHandlerName('usuárioGrid_E-mail_handler_export');
             $grid->AddExportColumn($column);
             
             //
-            // View column for Salário field
+            // View column for Senha field
             //
-            $column = new NumberViewColumn('Salário', 'Salário', 'Salário', $this->dataset);
+            $column = new TextViewColumn('Senha', 'Senha', 'Senha', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
-            $grid->AddExportColumn($column);
-            
-            //
-            // View column for Data de Pagamento field
-            //
-            $column = new DateTimeViewColumn('Data de Pagamento', 'Data de Pagamento', 'Data De Pagamento', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d');
             $grid->AddExportColumn($column);
         }
     
         private function AddCompareColumns(Grid $grid)
         {
             //
-            // View column for Nome do funcionario(a) field
+            // View column for Tipo field
             //
-            $column = new TextViewColumn('Nome do funcionario(a)', 'Nome do funcionario(a)', 'Nome Do Funcionario(a)', $this->dataset);
+            $column = new TextViewColumn('Tipo', 'Tipo', 'Tipo', $this->dataset);
+            $column->SetOrderable(true);
+            $grid->AddCompareColumn($column);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Cliente', 'Cliente_Nome', 'Cliente', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('funcionárioGrid_Nome do funcionario(a)_handler_compare');
+            $column->SetFullTextWindowHandlerName('usuárioGrid_Cliente_Nome_handler_compare');
+            $grid->AddCompareColumn($column);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Nome', 'Nome', 'Nome', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetMaxLength(75);
+            $column->SetFullTextWindowHandlerName('usuárioGrid_Nome_handler_compare');
+            $grid->AddCompareColumn($column);
+            
+            //
+            // View column for Data de nascimento field
+            //
+            $column = new DateTimeViewColumn('Data de nascimento', 'Data de nascimento', 'Data De Nascimento', $this->dataset);
+            $column->SetOrderable(true);
+            $column->SetDateTimeFormat('Y-m-d');
             $grid->AddCompareColumn($column);
             
             //
@@ -829,28 +942,6 @@
             $grid->AddCompareColumn($column);
             
             //
-            // View column for Data de contratação field
-            //
-            $column = new DateTimeViewColumn('Data de contratação', 'Data de contratação', 'Data De Contratação', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d');
-            $grid->AddCompareColumn($column);
-            
-            //
-            // View column for Cargo field
-            //
-            $column = new TextViewColumn('Cargo', 'Cargo', 'Cargo', $this->dataset);
-            $column->SetOrderable(true);
-            $grid->AddCompareColumn($column);
-            
-            //
-            // View column for Registro da Profissão field
-            //
-            $column = new DownloadExternalDataColumn('Registro da Profissão', 'Registro da Profissão', 'Registro Da Profissão', $this->dataset, '');
-            $column->SetOrderable(true);
-            $grid->AddCompareColumn($column);
-            
-            //
             // View column for Contato field
             //
             $column = new TextViewColumn('Contato', 'Contato', 'Contato', $this->dataset);
@@ -863,25 +954,14 @@
             $column = new TextViewColumn('E-mail', 'E-mail', 'E-mail', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('funcionárioGrid_E-mail_handler_compare');
+            $column->SetFullTextWindowHandlerName('usuárioGrid_E-mail_handler_compare');
             $grid->AddCompareColumn($column);
             
             //
-            // View column for Salário field
+            // View column for Senha field
             //
-            $column = new NumberViewColumn('Salário', 'Salário', 'Salário', $this->dataset);
+            $column = new TextViewColumn('Senha', 'Senha', 'Senha', $this->dataset);
             $column->SetOrderable(true);
-            $column->setNumberAfterDecimal(0);
-            $column->setThousandsSeparator(',');
-            $column->setDecimalSeparator('');
-            $grid->AddCompareColumn($column);
-            
-            //
-            // View column for Data de Pagamento field
-            //
-            $column = new DateTimeViewColumn('Data de Pagamento', 'Data de Pagamento', 'Data De Pagamento', $this->dataset);
-            $column->SetOrderable(true);
-            $column->SetDateTimeFormat('Y-m-d');
             $grid->AddCompareColumn($column);
         }
     
@@ -975,19 +1055,11 @@
     
         protected function doRegisterHandlers() {
             //
-            // View column for Nome do funcionario(a) field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Nome do funcionario(a)', 'Nome do funcionario(a)', 'Nome Do Funcionario(a)', $this->dataset);
+            $column = new TextViewColumn('Nome', 'Nome', 'Nome', $this->dataset);
             $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'funcionárioGrid_Nome do funcionario(a)_handler_list', $column);
-            GetApplication()->RegisterHTTPHandler($handler);
-            
-            //
-            // View column for Nome do funcionario(a) field
-            //
-            $column = new TextViewColumn('Nome do funcionario(a)', 'Nome do funcionario(a)', 'Nome Do Funcionario(a)', $this->dataset);
-            $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'funcionárioGrid_Nome do funcionario(a)_handler_print', $column);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_Nome_handler_list', $column);
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
@@ -995,31 +1067,23 @@
             //
             $column = new TextViewColumn('E-mail', 'E-mail', 'E-mail', $this->dataset);
             $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'funcionárioGrid_E-mail_handler_print', $column);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_E-mail_handler_list', $column);
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
-            // View column for Nome do funcionario(a) field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Nome do funcionario(a)', 'Nome do funcionario(a)', 'Nome Do Funcionario(a)', $this->dataset);
+            $column = new TextViewColumn('Cliente', 'Cliente_Nome', 'Cliente', $this->dataset);
             $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'funcionárioGrid_Nome do funcionario(a)_handler_compare', $column);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_Cliente_Nome_handler_print', $column);
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
-            // View column for E-mail field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('E-mail', 'E-mail', 'E-mail', $this->dataset);
+            $column = new TextViewColumn('Nome', 'Nome', 'Nome', $this->dataset);
             $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'funcionárioGrid_E-mail_handler_compare', $column);
-            GetApplication()->RegisterHTTPHandler($handler);
-            
-            //
-            // View column for Nome do funcionario(a) field
-            //
-            $column = new TextViewColumn('Nome do funcionario(a)', 'Nome do funcionario(a)', 'Nome Do Funcionario(a)', $this->dataset);
-            $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'funcionárioGrid_Nome do funcionario(a)_handler_view', $column);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_Nome_handler_print', $column);
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
@@ -1027,7 +1091,112 @@
             //
             $column = new TextViewColumn('E-mail', 'E-mail', 'E-mail', $this->dataset);
             $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'funcionárioGrid_E-mail_handler_view', $column);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_E-mail_handler_print', $column);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Cliente', 'Cliente_Nome', 'Cliente', $this->dataset);
+            $column->SetOrderable(true);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_Cliente_Nome_handler_compare', $column);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Nome', 'Nome', 'Nome', $this->dataset);
+            $column->SetOrderable(true);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_Nome_handler_compare', $column);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            //
+            // View column for E-mail field
+            //
+            $column = new TextViewColumn('E-mail', 'E-mail', 'E-mail', $this->dataset);
+            $column->SetOrderable(true);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_E-mail_handler_compare', $column);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MyPDOConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`perfil`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('ID', true, true, true),
+                    new StringField('Nome', true),
+                    new StringField('CPF', true),
+                    new StringField('RG', true),
+                    new StringField('Contato', true),
+                    new StringField('Ação', true),
+                    new DateField('Data', true)
+                )
+            );
+            $lookupDataset->setOrderByField('Nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'insert_Cliente_Nome_search', 'ID', 'Nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Cliente', 'Cliente_Nome', 'Cliente', $this->dataset);
+            $column->SetOrderable(true);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_Cliente_Nome_handler_view', $column);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            //
+            // View column for Nome field
+            //
+            $column = new TextViewColumn('Nome', 'Nome', 'Nome', $this->dataset);
+            $column->SetOrderable(true);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_Nome_handler_view', $column);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            //
+            // View column for E-mail field
+            //
+            $column = new TextViewColumn('E-mail', 'E-mail', 'E-mail', $this->dataset);
+            $column->SetOrderable(true);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'usuárioGrid_E-mail_handler_view', $column);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MyPDOConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`perfil`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('ID', true, true, true),
+                    new StringField('Nome', true),
+                    new StringField('CPF', true),
+                    new StringField('RG', true),
+                    new StringField('Contato', true),
+                    new StringField('Ação', true),
+                    new DateField('Data', true)
+                )
+            );
+            $lookupDataset->setOrderByField('Nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'edit_Cliente_Nome_search', 'ID', 'Nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MyPDOConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`perfil`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('ID', true, true, true),
+                    new StringField('Nome', true),
+                    new StringField('CPF', true),
+                    new StringField('RG', true),
+                    new StringField('Contato', true),
+                    new StringField('Ação', true),
+                    new DateField('Data', true)
+                )
+            );
+            $lookupDataset->setOrderByField('Nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'multi_edit_Cliente_Nome_search', 'ID', 'Nome', null, 20);
             GetApplication()->RegisterHTTPHandler($handler);
         }
        
@@ -1177,12 +1346,12 @@
 
     try
     {
-        $Page = new funcionárioPage("funcionário", "funcionário.php", GetCurrentUserPermissionSetForDataSource("funcionário"), 'UTF-8');
-        $Page->SetTitle('Funcionário');
-        $Page->SetMenuLabel('Funcionário');
+        $Page = new usuárioPage("usuário", "usuário.php", GetCurrentUserPermissionSetForDataSource("usuário"), 'UTF-8');
+        $Page->SetTitle('Usuário');
+        $Page->SetMenuLabel('Usuário');
         $Page->SetHeader(GetPagesHeader());
         $Page->SetFooter(GetPagesFooter());
-        $Page->SetRecordPermission(GetCurrentUserRecordPermissionsForDataSource("funcionário"));
+        $Page->SetRecordPermission(GetCurrentUserRecordPermissionsForDataSource("usuário"));
         GetApplication()->SetMainPage($Page);
         GetApplication()->Run();
     }

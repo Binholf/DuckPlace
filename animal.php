@@ -53,6 +53,7 @@
             );
             $this->dataset->AddLookupField('Espécie', 'especie', new IntegerField('ID'), new StringField('Nome', false, false, false, false, 'Espécie_Nome', 'Espécie_Nome_especie'), 'Espécie_Nome_especie');
             $this->dataset->AddLookupField('Vacinação', 'vacina', new IntegerField('ID'), new StringField('Nome', false, false, false, false, 'Vacinação_Nome', 'Vacinação_Nome_vacina'), 'Vacinação_Nome_vacina');
+            $this->dataset->AddLookupField('Responsável', 'perfil', new IntegerField('ID'), new StringField('Nome', false, false, false, false, 'Responsável_Nome', 'Responsável_Nome_perfil'), 'Responsável_Nome_perfil');
         }
     
         protected function DoPrepare() {
@@ -88,7 +89,7 @@
                 new FilterColumn($this->dataset, 'Espécie', 'Espécie_Nome', 'Espécie'),
                 new FilterColumn($this->dataset, 'Vacinação', 'Vacinação_Nome', 'Vacinação'),
                 new FilterColumn($this->dataset, 'Idade', 'Idade', 'Idade'),
-                new FilterColumn($this->dataset, 'Responsável', 'Responsável', 'Responsável'),
+                new FilterColumn($this->dataset, 'Responsável', 'Responsável_Nome', 'Responsável'),
                 new FilterColumn($this->dataset, 'Status', 'Status', 'Status'),
                 new FilterColumn($this->dataset, 'Descrição', 'Descrição', 'Descrição')
             );
@@ -107,7 +108,8 @@
         protected function setupColumnFilter(ColumnFilter $columnFilter)
         {
             $columnFilter
-                ->setOptionsFor('Espécie');
+                ->setOptionsFor('Espécie')
+                ->setOptionsFor('Responsável');
         }
     
         protected function setupFilterBuilder(FilterBuilder $filterBuilder, FixedKeysArray $columns)
@@ -152,14 +154,22 @@
                 )
             );
             
-            $main_editor = new TextEdit('responsável_edit');
-            $main_editor->SetMaxLength(100);
+            $main_editor = new DynamicCombobox('responsável_edit', $this->CreateLinkBuilder());
+            $main_editor->setAllowClear(true);
+            $main_editor->setMinimumInputLength(0);
+            $main_editor->SetAllowNullValue(false);
+            $main_editor->SetHandlerName('filter_builder_Responsável_Nome_search');
+            
+            $multi_value_select_editor = new RemoteMultiValueSelect('Responsável', $this->CreateLinkBuilder());
+            $multi_value_select_editor->SetHandlerName('filter_builder_Responsável_Nome_search');
             
             $filterBuilder->addColumn(
                 $columns['Responsável'],
                 array(
                     FilterConditionOperator::EQUALS => $main_editor,
-                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor
+                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
+                    FilterConditionOperator::IN => $multi_value_select_editor,
+                    FilterConditionOperator::NOT_IN => $multi_value_select_editor
                 )
             );
             
@@ -261,12 +271,12 @@
             $grid->AddViewColumn($column);
             
             //
-            // View column for Responsável field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Responsável', 'Responsável', 'Responsável', $this->dataset);
+            $column = new TextViewColumn('Responsável', 'Responsável_Nome', 'Responsável', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('animalGrid_Responsável_handler_list');
+            $column->SetFullTextWindowHandlerName('animalGrid_Responsável_Nome_handler_list');
             $column->setMinimalVisibility(ColumnVisibility::PHONE);
             $column->SetDescription('');
             $column->SetFixedWidth(null);
@@ -323,12 +333,12 @@
             $grid->AddSingleRecordViewColumn($column);
             
             //
-            // View column for Responsável field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Responsável', 'Responsável', 'Responsável', $this->dataset);
+            $column = new TextViewColumn('Responsável', 'Responsável_Nome', 'Responsável', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('animalGrid_Responsável_handler_view');
+            $column->SetFullTextWindowHandlerName('animalGrid_Responsável_Nome_handler_view');
             $grid->AddSingleRecordViewColumn($column);
             
             //
@@ -572,9 +582,26 @@
             //
             // Edit column for Responsável field
             //
-            $editor = new TextEdit('responsável_edit');
-            $editor->SetMaxLength(100);
-            $editColumn = new CustomEditColumn('Responsável', 'Responsável', $editor, $this->dataset);
+            $editor = new DynamicCombobox('responsável_edit', $this->CreateLinkBuilder());
+            $editor->setAllowClear(true);
+            $editor->setMinimumInputLength(0);
+            $lookupDataset = new TableDataset(
+                MyPDOConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`perfil`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('ID', true, true, true),
+                    new StringField('Nome', true),
+                    new StringField('CPF', true),
+                    new StringField('RG', true),
+                    new StringField('Contato', true),
+                    new StringField('Ação', true),
+                    new DateField('Data', true)
+                )
+            );
+            $lookupDataset->setOrderByField('Nome', 'ASC');
+            $editColumn = new DynamicLookupEditColumn('Responsável', 'Responsável', 'Responsável_Nome', 'insert_Responsável_Nome_search', $editor, $this->dataset, $lookupDataset, 'ID', 'Nome', '');
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -661,12 +688,12 @@
             $grid->AddPrintColumn($column);
             
             //
-            // View column for Responsável field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Responsável', 'Responsável', 'Responsável', $this->dataset);
+            $column = new TextViewColumn('Responsável', 'Responsável_Nome', 'Responsável', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('animalGrid_Responsável_handler_print');
+            $column->SetFullTextWindowHandlerName('animalGrid_Responsável_Nome_handler_print');
             $grid->AddPrintColumn($column);
             
             //
@@ -734,12 +761,12 @@
             $grid->AddExportColumn($column);
             
             //
-            // View column for Responsável field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Responsável', 'Responsável', 'Responsável', $this->dataset);
+            $column = new TextViewColumn('Responsável', 'Responsável_Nome', 'Responsável', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('animalGrid_Responsável_handler_export');
+            $column->SetFullTextWindowHandlerName('animalGrid_Responsável_Nome_handler_export');
             $grid->AddExportColumn($column);
             
             //
@@ -797,12 +824,12 @@
             $grid->AddCompareColumn($column);
             
             //
-            // View column for Responsável field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Responsável', 'Responsável', 'Responsável', $this->dataset);
+            $column = new TextViewColumn('Responsável', 'Responsável_Nome', 'Responsável', $this->dataset);
             $column->SetOrderable(true);
             $column->SetMaxLength(75);
-            $column->SetFullTextWindowHandlerName('animalGrid_Responsável_handler_compare');
+            $column->SetFullTextWindowHandlerName('animalGrid_Responsável_Nome_handler_compare');
             $grid->AddCompareColumn($column);
             
             //
@@ -926,11 +953,11 @@
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
-            // View column for Responsável field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Responsável', 'Responsável', 'Responsável', $this->dataset);
+            $column = new TextViewColumn('Responsável', 'Responsável_Nome', 'Responsável', $this->dataset);
             $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'animalGrid_Responsável_handler_list', $column);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'animalGrid_Responsável_Nome_handler_list', $column);
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
@@ -958,11 +985,11 @@
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
-            // View column for Responsável field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Responsável', 'Responsável', 'Responsável', $this->dataset);
+            $column = new TextViewColumn('Responsável', 'Responsável_Nome', 'Responsável', $this->dataset);
             $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'animalGrid_Responsável_handler_print', $column);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'animalGrid_Responsável_Nome_handler_print', $column);
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
@@ -990,11 +1017,11 @@
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
-            // View column for Responsável field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Responsável', 'Responsável', 'Responsável', $this->dataset);
+            $column = new TextViewColumn('Responsável', 'Responsável_Nome', 'Responsável', $this->dataset);
             $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'animalGrid_Responsável_handler_compare', $column);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'animalGrid_Responsável_Nome_handler_compare', $column);
             GetApplication()->RegisterHTTPHandler($handler);
             
             $lookupDataset = new TableDataset(
@@ -1034,6 +1061,25 @@
             $lookupDataset = new TableDataset(
                 MyPDOConnectionFactory::getInstance(),
                 GetConnectionOptions(),
+                '`perfil`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('ID', true, true, true),
+                    new StringField('Nome', true),
+                    new StringField('CPF', true),
+                    new StringField('RG', true),
+                    new StringField('Contato', true),
+                    new StringField('Ação', true),
+                    new DateField('Data', true)
+                )
+            );
+            $lookupDataset->setOrderByField('Nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'insert_Responsável_Nome_search', 'ID', 'Nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MyPDOConnectionFactory::getInstance(),
+                GetConnectionOptions(),
                 '`especie`');
             $lookupDataset->addFields(
                 array(
@@ -1046,6 +1092,44 @@
             );
             $lookupDataset->setOrderByField('Nome', 'ASC');
             $handler = new DynamicSearchHandler($lookupDataset, $this, 'filter_builder_Espécie_Nome_search', 'ID', 'Nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MyPDOConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`perfil`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('ID', true, true, true),
+                    new StringField('Nome', true),
+                    new StringField('CPF', true),
+                    new StringField('RG', true),
+                    new StringField('Contato', true),
+                    new StringField('Ação', true),
+                    new DateField('Data', true)
+                )
+            );
+            $lookupDataset->setOrderByField('Nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'filter_builder_Responsável_Nome_search', 'ID', 'Nome', null, 20);
+            GetApplication()->RegisterHTTPHandler($handler);
+            
+            $lookupDataset = new TableDataset(
+                MyPDOConnectionFactory::getInstance(),
+                GetConnectionOptions(),
+                '`perfil`');
+            $lookupDataset->addFields(
+                array(
+                    new IntegerField('ID', true, true, true),
+                    new StringField('Nome', true),
+                    new StringField('CPF', true),
+                    new StringField('RG', true),
+                    new StringField('Contato', true),
+                    new StringField('Ação', true),
+                    new DateField('Data', true)
+                )
+            );
+            $lookupDataset->setOrderByField('Nome', 'ASC');
+            $handler = new DynamicSearchHandler($lookupDataset, $this, 'filter_builder_Responsável_Nome_search', 'ID', 'Nome', null, 20);
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
@@ -1073,11 +1157,11 @@
             GetApplication()->RegisterHTTPHandler($handler);
             
             //
-            // View column for Responsável field
+            // View column for Nome field
             //
-            $column = new TextViewColumn('Responsável', 'Responsável', 'Responsável', $this->dataset);
+            $column = new TextViewColumn('Responsável', 'Responsável_Nome', 'Responsável', $this->dataset);
             $column->SetOrderable(true);
-            $handler = new ShowTextBlobHandler($this->dataset, $this, 'animalGrid_Responsável_handler_view', $column);
+            $handler = new ShowTextBlobHandler($this->dataset, $this, 'animalGrid_Responsável_Nome_handler_view', $column);
             GetApplication()->RegisterHTTPHandler($handler);
             
             $lookupDataset = new TableDataset(
