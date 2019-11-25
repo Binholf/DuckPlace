@@ -89,7 +89,6 @@
         protected function setupQuickFilter(QuickFilter $quickFilter, FixedKeysArray $columns)
         {
             $quickFilter
-                ->addColumn($columns['ID'])
                 ->addColumn($columns['Nome'])
                 ->addColumn($columns['Nome Científico'])
                 ->addColumn($columns['Descrição'])
@@ -103,24 +102,6 @@
     
         protected function setupFilterBuilder(FilterBuilder $filterBuilder, FixedKeysArray $columns)
         {
-            $main_editor = new TextEdit('id_edit');
-            
-            $filterBuilder->addColumn(
-                $columns['ID'],
-                array(
-                    FilterConditionOperator::EQUALS => $main_editor,
-                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
-                    FilterConditionOperator::IS_GREATER_THAN => $main_editor,
-                    FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::IS_LESS_THAN => $main_editor,
-                    FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::IS_BETWEEN => $main_editor,
-                    FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
-                    FilterConditionOperator::IS_BLANK => null,
-                    FilterConditionOperator::IS_NOT_BLANK => null
-                )
-            );
-            
             $main_editor = new TextEdit('nome_edit');
             $main_editor->SetMaxLength(50);
             
@@ -128,21 +109,7 @@
                 $columns['Nome'],
                 array(
                     FilterConditionOperator::EQUALS => $main_editor,
-                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
-                    FilterConditionOperator::IS_GREATER_THAN => $main_editor,
-                    FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::IS_LESS_THAN => $main_editor,
-                    FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::IS_BETWEEN => $main_editor,
-                    FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
-                    FilterConditionOperator::CONTAINS => $main_editor,
-                    FilterConditionOperator::DOES_NOT_CONTAIN => $main_editor,
-                    FilterConditionOperator::BEGINS_WITH => $main_editor,
-                    FilterConditionOperator::ENDS_WITH => $main_editor,
-                    FilterConditionOperator::IS_LIKE => $main_editor,
-                    FilterConditionOperator::IS_NOT_LIKE => $main_editor,
-                    FilterConditionOperator::IS_BLANK => null,
-                    FilterConditionOperator::IS_NOT_BLANK => null
+                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor
                 )
             );
             
@@ -153,21 +120,7 @@
                 $columns['Nome Científico'],
                 array(
                     FilterConditionOperator::EQUALS => $main_editor,
-                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
-                    FilterConditionOperator::IS_GREATER_THAN => $main_editor,
-                    FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::IS_LESS_THAN => $main_editor,
-                    FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::IS_BETWEEN => $main_editor,
-                    FilterConditionOperator::IS_NOT_BETWEEN => $main_editor,
-                    FilterConditionOperator::CONTAINS => $main_editor,
-                    FilterConditionOperator::DOES_NOT_CONTAIN => $main_editor,
-                    FilterConditionOperator::BEGINS_WITH => $main_editor,
-                    FilterConditionOperator::ENDS_WITH => $main_editor,
-                    FilterConditionOperator::IS_LIKE => $main_editor,
-                    FilterConditionOperator::IS_NOT_LIKE => $main_editor,
-                    FilterConditionOperator::IS_BLANK => null,
-                    FilterConditionOperator::IS_NOT_BLANK => null
+                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor
                 )
             );
             
@@ -182,27 +135,12 @@
             $multi_value_select_editor = new MultiValueSelect('Classificação');
             $multi_value_select_editor->setChoices($main_editor->getChoices());
             
-            $text_editor = new TextEdit('Classificação');
-            
             $filterBuilder->addColumn(
                 $columns['Classificação'],
                 array(
                     FilterConditionOperator::EQUALS => $main_editor,
-                    FilterConditionOperator::DOES_NOT_EQUAL => $main_editor,
-                    FilterConditionOperator::IS_GREATER_THAN => $main_editor,
-                    FilterConditionOperator::IS_GREATER_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::IS_LESS_THAN => $main_editor,
-                    FilterConditionOperator::IS_LESS_THAN_OR_EQUAL_TO => $main_editor,
-                    FilterConditionOperator::CONTAINS => $text_editor,
-                    FilterConditionOperator::DOES_NOT_CONTAIN => $text_editor,
-                    FilterConditionOperator::BEGINS_WITH => $text_editor,
-                    FilterConditionOperator::ENDS_WITH => $text_editor,
-                    FilterConditionOperator::IS_LIKE => $text_editor,
-                    FilterConditionOperator::IS_NOT_LIKE => $text_editor,
                     FilterConditionOperator::IN => $multi_value_select_editor,
-                    FilterConditionOperator::NOT_IN => $multi_value_select_editor,
-                    FilterConditionOperator::IS_BLANK => null,
-                    FilterConditionOperator::IS_NOT_BLANK => null
+                    FilterConditionOperator::NOT_IN => $multi_value_select_editor
                 )
             );
         }
@@ -326,37 +264,10 @@
             $grid->AddEditColumn($editColumn);
             
             //
-            // Edit column for Nome Científico field
-            //
-            $editor = new TextEdit('nome_científico_edit');
-            $editor->SetMaxLength(50);
-            $editColumn = new CustomEditColumn('Nome Científico', 'Nome Científico', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddEditColumn($editColumn);
-            
-            //
             // Edit column for Descrição field
             //
             $editor = new TextAreaEdit('descrição_edit', 50, 8);
             $editColumn = new CustomEditColumn('Descrição', 'Descrição', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddEditColumn($editColumn);
-            
-            //
-            // Edit column for Classificação field
-            //
-            $editor = new RadioEdit('classificação_edit');
-            $editor->SetDisplayMode(RadioEdit::StackedMode);
-            $editor->addChoice('Canino', 'Canino');
-            $editor->addChoice('Felino', 'Felino');
-            $editor->addChoice('Ave', 'Ave');
-            $editor->addChoice('Réptil', 'Réptil');
-            $editor->addChoice('Outro', 'Outro');
-            $editColumn = new CustomEditColumn('Classificação', 'Classificação', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);
@@ -377,37 +288,10 @@
             $grid->AddMultiEditColumn($editColumn);
             
             //
-            // Edit column for Nome Científico field
-            //
-            $editor = new TextEdit('nome_científico_edit');
-            $editor->SetMaxLength(50);
-            $editColumn = new CustomEditColumn('Nome Científico', 'Nome Científico', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddMultiEditColumn($editColumn);
-            
-            //
             // Edit column for Descrição field
             //
             $editor = new TextAreaEdit('descrição_edit', 50, 8);
             $editColumn = new CustomEditColumn('Descrição', 'Descrição', $editor, $this->dataset);
-            $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
-            $editor->GetValidatorCollection()->AddValidator($validator);
-            $this->ApplyCommonColumnEditProperties($editColumn);
-            $grid->AddMultiEditColumn($editColumn);
-            
-            //
-            // Edit column for Classificação field
-            //
-            $editor = new RadioEdit('classificação_edit');
-            $editor->SetDisplayMode(RadioEdit::StackedMode);
-            $editor->addChoice('Canino', 'Canino');
-            $editor->addChoice('Felino', 'Felino');
-            $editor->addChoice('Ave', 'Ave');
-            $editor->addChoice('Réptil', 'Réptil');
-            $editor->addChoice('Outro', 'Outro');
-            $editColumn = new CustomEditColumn('Classificação', 'Classificação', $editor, $this->dataset);
             $validator = new RequiredValidator(StringUtils::Format($this->GetLocalizerCaptions()->GetMessageString('RequiredValidationMessage'), $editColumn->GetCaption()));
             $editor->GetValidatorCollection()->AddValidator($validator);
             $this->ApplyCommonColumnEditProperties($editColumn);

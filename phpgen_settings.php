@@ -62,6 +62,8 @@ function GetPageInfos()
     $result = array();
     $result[] = array('caption' => 'Vacina', 'short_caption' => 'Vacina', 'filename' => 'vacina.php', 'name' => 'vacina', 'group_name' => 'Default', 'add_separator' => false, 'description' => '');
     $result[] = array('caption' => 'Especie', 'short_caption' => 'Especie', 'filename' => 'especie.php', 'name' => 'especie', 'group_name' => 'Default', 'add_separator' => false, 'description' => '');
+    $result[] = array('caption' => 'Animal', 'short_caption' => 'Animal', 'filename' => 'animal.php', 'name' => 'animal', 'group_name' => 'Default', 'add_separator' => false, 'description' => '');
+    $result[] = array('caption' => 'Funcionário', 'short_caption' => 'Funcionário', 'filename' => 'funcionário.php', 'name' => 'funcionário', 'group_name' => 'Default', 'add_separator' => false, 'description' => '');
     return $result;
 }
 
